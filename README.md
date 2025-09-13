@@ -7,7 +7,7 @@ This project demonstrates the use of MongoDB with Node.js and Mongoose.
 - `src/index.js`: Main entry point of the application.
 - `src/model/Persons.js`: Mongoose model for persons.
 - `src/model/plugins/timestamp.js`: Mongoose plugin for timestamps.
-
+- `src/controllers/personController.js`: Mongoose controller for hnadling opertaions
 ## Setup
 
 1. Install dependencies:

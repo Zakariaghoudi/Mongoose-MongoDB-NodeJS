@@ -1,128 +1,84 @@
 //import mongoose
 const mongoose = require("mongoose");
-//import the model
-const Persons = require("./model/Persons");
+//import personController
+const {
+  addPerson,
+  addPersons,
+  findAllPersons,
+  findPersonById,
+  addFoodToPerson,
+  updatePersonAgeByName,
+  deletePersonById,
+  deleteManyByName,
+  chainSearch,
+} = require("./controllers/personController");
 //import dotenv for mongo_uri
 require("dotenv").config();
 
-// connect to database
-mongoose
-  .connect(process.env.MONGO_URI)
-  //  { useNewUrlParser: true, useUnifiedTopology: true }) = to avoid deprecation warning 
-  .then(() => {
+// connect to database with  async/await syntax
+const server = async () => {
+  try {
+    await mongoose.connect(process.env.MONGO_URI);
     console.log("Connected to MongoDB");
 
-    //Create and Save a Record of a Model:
-    const person = new Persons({
-        name: 'Mohamed',
-        age: 30,
-        favoriteFoods: ['Pizza', 'Burger']
-    });
-    person.save()
-        .then(doc => {
-            console.log('Person saved:', doc);
-        })
-    .catch(err =>{
-        console.error("error saving person:", err);
-    });
+    {
+      /*perform database operations here*/
+    }
+
+    // Save a Record of a Model:
+    const savePerson = await addPerson();
+    console.log("Person added:", savePerson);
 
     // create many records with model.create()
-    const arrayOfPeople = [
-      { name: "Jaddi ", age: 25, favoriteFoods: ["Pasta", "Salad"] },
-      { name: "nsibi ", age: 40, favoriteFoods: ["Tacos", "Burritos"] },
-      { name: "ftayri", age: 35, favoriteFoods: ["Steak", "Fries"] },
-      { name: "ghrab", age: 28, favoriteFoods: ["Sushi", "Ramen"] },
-    ];
-    Persons.create(arrayOfPeople)
-      .then((docs) => {
-        console.log("People saved:", docs);
-      })
-      .catch((err) => {
-        console.error("error saving people:", err);
-      });
+    const savePersons = await addPersons();
+    console.log("People added:", savePersons);
 
-    // Use model.find() to Search Your Database : get all the people 
-    Persons.find()
-      .then((docs) => {
-        console.log("Found people:", docs);
-      })
-      .catch((err) => {
-        console.error("error finding people:", err);
-      });
+    // get all persons
+    const allPersons = await findAllPersons();
+    console.log("All persons:", allPersons);
 
-      // get user by id 
-      const PersonId = "68c4734c9b20844fa12ddf37"; 
-      Persons.findById(PersonId)
-        .then((doc) => {
-          console.log("Found person:", doc);
-        })
-        .catch((err) => {
-          console.error("error finding person:", err);
-        });
+    // get user by id
+    const personId = "68c58599eb8bbe3b6ac1ce91";
+    const personById = await findPersonById(personId);
+    console.log("Person by ID:", personById);
 
-        // find person by id and  update, add "hamburger" to favoriteFoods
-      const foodToAdd = "Helba";
-      Persons.findById("68c4734c9b20844fa12ddf36") // find person by id
-      .then(person => {
-        person.favoriteFoods.push(foodToAdd); // add food to favoriteFoods array
-        person.markModified('favoriteFoods'); // Notify Mongoose of the change
-        return person.save(); // save the updated person
-      })
-      .then(updatedPerson => {
-        console.log("Updated person:", updatedPerson);
-      })
-      .catch(err => {
-        console.error("error updating person:", err);
-      });
+    //  add "hamburger" to favoriteFoods
+    const foodToAdd = "hamburger";
+    const id = "68c58461dadb862fddd19868";
+    const updatePerson = await addFoodToPerson(id, foodToAdd);
+    console.log("Update person:", updatePerson);
 
-    // find one and update the age of the person named "ghrab" to 20
-     const personName = "ghrab";
-      Persons.findOneAndUpdate({ name: personName }, 
-      { age: 20 }, { new: true }) // return the updated document
-      .then((doc) => {
-        console.log("Updated person:", doc);
-      })
-      .catch((err) => {
-        console.error("error updating person:", err);
-      });
+    // change the age of  "Mohamed" to 20
+    const personName = "Mohamed";
+    const newAge = 20;
+    const updatedPerson = await updatePersonAgeByName(personName, newAge);
+    console.log("Updated person:", updatedPerson);
 
-      // Delete one person by ID
-      const personIdToDelete = "68c4734c9b20844fa12ddf39"; 
-      Persons.findByIdAndDelete(personIdToDelete)
-      .then((doc)=>{
-        console.log("Deleted person:", doc);
-      })
-      .catch((err)=>{
-        console.error("error deleting person:", err);
-      });
+    // Delete by ID
+    const personIdToDelete = "68c58599eb8bbe3b6ac1ce94";
+    const deletedPerson = await deletePersonById(personIdToDelete);
+    console.log("Deleted person:", deletedPerson);
 
-      // Delete many people named "ftayri"
-      const nameToDelete = "ftayri";
-      Persons.deleteMany({ name: nameToDelete })
-      .then((result) => {
-        console.log("Deleted people:", result);
-      })
-      .catch((err) => {
-        console.error("error deleting people:", err);
-      });
+    // Delete many people named "ftayri"
+    const nameToDelete = "ftayri";
+    const deleteResult = await deleteManyByName(nameToDelete);
+    console.log("Delete many result:", deleteResult);
 
+    // Chain Search Query Helpers
+    const foodToSearch = "hamburger";
+    const searchResults = await chainSearch(foodToSearch);
+    console.log("Search results:", searchResults);
 
-    // Chain Search Query Helpers to Narrow Search Results :  Sort them by name, limit the results  
-      const foodToSearch = "hamburger";
-    Persons.find({ favoriteFoods: foodToSearch }) // find people who like Hamburgers
-    .sort({ name: 1 }) // sort by name descending
-      .limit(2) // limit to 2 results
-      .select({ age: 0 }) // hide age field
-      .exec() // execute the query
-      .then((docs) => {
-        console.log("Search results:", docs);
-      })
-      .catch((err) => {
-        console.error("error searching people:", err);
-      });
+    {
+      /*end of the database operations*/
+    }
 
-
-      // end of the database operations
-      // catch any connection errors
-  })
-  .catch((err) => console.error("Connection error...", err));
+    // catch any connection errors and close the connection
+  } catch (error) {
+    console.error("Connection error...", error);
+  } finally {
+    mongoose.connection.close(); // close the connection
+    console.log("Connection closed");
+  }
+};
+server(); // run the server function
